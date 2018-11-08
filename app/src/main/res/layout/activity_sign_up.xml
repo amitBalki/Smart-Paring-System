@@ -24,7 +24,7 @@
             android:padding="16dp"
             android:src="@drawable/baseline_directions_bike_white_48" />
 
-        <!--<EditText
+        <EditText
             android:id="@+id/firstName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -86,7 +86,7 @@
             android:maxLines="1"
             android:padding="8dp"
             android:textColor="#FFFF"
-            android:textColorHint="#fff" />-->
+            android:textColorHint="#fff" />
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

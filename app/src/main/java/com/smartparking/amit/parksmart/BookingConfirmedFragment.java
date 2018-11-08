@@ -1,6 +1,8 @@
 package com.smartparking.amit.parksmart;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -146,11 +148,25 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
                             }
                         });
 
+
                     }
                 }).start();
+                Intent intent = new Intent(getActivity(),MapNavActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                getActivity().finish();
+                Toast.makeText(getActivity(),"Booking Cancelled", Toast.LENGTH_SHORT).show();
+                startActivity(intent);
 
             }
         });
+
+        view.findViewById(R.id.proceedpayment).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getActivity(), PaymentActivity.class));
+            }
+        });
+
         Navigate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

@@ -55,8 +55,6 @@ SlotViewingActivity extends AppCompatActivity {
 
             }
         });
-
-
         edit = findViewById(R.id.edit);
         edit.setOnClickListener(new View.OnClickListener() {
             @Override
