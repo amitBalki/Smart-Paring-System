@@ -55,36 +55,13 @@ SlotViewingActivity extends AppCompatActivity {
 
             }
         });
+
         edit = findViewById(R.id.edit);
+        oneditclick();
         edit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                if(edit.getText()=="EDIT"){
-                    edit.setText(myDone);
-
-
-                    mRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-
-                            myParamenters(r, c, dataSnapshot.child("SlotIds"));
-
-                        }
-
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-
-                        }
-                    });
-
-
-                }
-                else{
-                    edit.setText(meEdit);
-                    showSlots();
-                }
-
+                oneditclick();
             }
         });
 
@@ -115,28 +92,48 @@ SlotViewingActivity extends AppCompatActivity {
             }
         });
 
+
+
+    }
+
+    private void oneditclick() {
+        if(edit.getText()=="EDIT"){
+            edit.setText(myDone);
+
+
+            mRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+
+                    myParamenters(r, c, dataSnapshot.child("SlotIds"));
+
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+
+
+        }
+        else{
+            edit.setText(meEdit);
+            showSlots();
+        }
     }
 
     public void showSlots(){
         mThumbIds.clear();
-        Log.d("Datasnapshot", "Value5555555555 " + mdataSnapshot);
         for(long k = 0; k<r*c; k++){
 
             if(mdataSnapshot.child("SlotIds").child("Slot" + k).getValue() == null)  {
                 mThumbIds.add((int) k, R.drawable.noborder);
             }
             else{
-                Log.d("Valuexssss","datasnapshot value " + mdataSnapshot.child("Slot" + k) );
                 mThumbIds.add((int)k,R.drawable.green);
             }
         }
-     /*   ArrayList<Integer> newArrayList = new ArrayList<>();
-        ImageAdapter newImageAdapter = new ImageAdapter(SlotViewingActivity.this, newArrayList);
-        gridview.setAdapter(newImageAdapter);
-
-        imageAdapter = new ImageAdapter(SlotViewingActivity.this,mThumbIds);
-        gridview.setAdapter(imageAdapter);*/
-
         refreshView();
     }
 
@@ -152,13 +149,6 @@ SlotViewingActivity extends AppCompatActivity {
                 mThumbIds.add((int)k,R.drawable.grey);
             }
         }
-      /*  ArrayList<Integer> newArrayList = new ArrayList<>();
-        ImageAdapter newImageAdapter = new ImageAdapter(SlotViewingActivity.this, newArrayList);
-        gridview.setAdapter(newImageAdapter);
-
-        imageAdapter = new ImageAdapter(SlotViewingActivity.this,mThumbIds);
-        gridview.setAdapter(imageAdapter);*/
-
         refreshView();
     }
 

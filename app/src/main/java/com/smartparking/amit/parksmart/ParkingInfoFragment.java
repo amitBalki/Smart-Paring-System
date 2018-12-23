@@ -1,6 +1,7 @@
 package com.smartparking.amit.parksmart;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -9,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -20,6 +22,7 @@ import com.google.firebase.database.ValueEventListener;
 public class ParkingInfoFragment extends Fragment{
 
     private int  bookingFlag;
+    private TextView sysName,cost;
     public ParkingInfoFragment() {
         // Required empty public constructor
     }
@@ -28,17 +31,21 @@ public class ParkingInfoFragment extends Fragment{
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_parking_info, container, false);
+        View view = inflater.inflate(R.layout.fragment_parking_info, container, false);
+        sysName = view.findViewById(R.id.systemName);
+        return view;
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         Button bookmyspot = view.findViewById(R.id.bookslot);
+        final String marker = getArguments().getString("ParkingName");
+        sysName.setText(marker);
         bookmyspot.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 bookingFlag = 1;
-                bookaslot(getArguments().getString("ParkingName"));
+                bookaslot(marker);
             }
         });
     }
@@ -93,7 +100,7 @@ public class ParkingInfoFragment extends Fragment{
         FirebaseDatabase.getInstance().getReference("Users")
                 .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
                 .child("BookedSatus")
-                .child("lacationInfo").setValue(bundle);
+                .child("locationInfo").setValue(bundle.clone());
 
         if(bundle!=null) {
             BookingConfirmedFragment bookingConfirmedFragment = new BookingConfirmedFragment();

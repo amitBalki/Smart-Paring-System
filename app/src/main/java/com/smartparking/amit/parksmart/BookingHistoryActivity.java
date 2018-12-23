@@ -1,7 +1,9 @@
 package com.smartparking.amit.parksmart;
 
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -13,6 +15,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 
@@ -33,31 +36,20 @@ public class BookingHistoryActivity extends AppCompatActivity {
             final ArrayList<customHistory> bookinghistory = new ArrayList<customHistory>();
             final CustomAdapter arrayAdapter = new CustomAdapter(this, bookinghistory);
             listView.setAdapter(arrayAdapter);
-            BookingRef.addChildEventListener(new ChildEventListener() {
+            BookingRef.addValueEventListener(new ValueEventListener() {
                 @Override
-                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                    String sysName = dataSnapshot.child("SystemName").getValue().toString();
-                    String date = dataSnapshot.child("MyDate").getValue().toString();
-                    long bill = (long) dataSnapshot.child("Bill").getValue();
-                    customHistory value = new customHistory(sysName, date, bill);
-                    //customHistory value = dataSnapshot.getValue(customHistory.class);
-                    bookinghistory.add(value);
-                    arrayAdapter.notifyDataSetChanged();
-                }
-
-                @Override
-                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-                }
-
-                @Override
-                public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-                }
-
-                @Override
-                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    for(DataSnapshot d: dataSnapshot.getChildren()){
+                        /*String sysName = d.child("mSystemName").getValue().toString();
+                        String date = d.child("mDate").getValue().toString();
+                        long bill = (long) d.child("mBill").getValue();
+                        String status = d.child("status").getValue().toString();*/
+                        Log.d("customHistory", "onChildAdded: "+ d.toString());
+                        customHistory value = d.getValue(customHistory.class);
+                        //customHistory value = dataSnapshot.getValue(customHistory.class);
+                        bookinghistory.add(value);
+                        arrayAdapter.notifyDataSetChanged();
+                    }
                 }
 
                 @Override

@@ -147,7 +147,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Serial
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot ds : dataSnapshot.getChildren()) {
                     MyLocation MyLocation = ds.getValue(MyLocation.class);
-                    //Log.d("mMarker", "onDataChange: "+ds.getKey().toString());
+                    Log.d("mMarker", "onDataChange: "+ds.toString());
                     mMap.addMarker(new MarkerOptions()
                             .position(new LatLng(MyLocation.getLatitude(), MyLocation.getLongitude()))
                             .title(ds.getKey().toString())

@@ -21,5 +21,12 @@
         app:behavior_peekHeight="80dp"
         app:layout_behavior="@string/bottom_sheet_behavior">
     </android.support.v4.widget.NestedScrollView>
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@xml/progress"
+        android:visibility="gone" />
     <include layout="@layout/booking_confirmed"/>
 </android.support.design.widget.CoordinatorLayout>

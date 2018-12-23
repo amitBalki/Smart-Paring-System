@@ -33,6 +33,16 @@
             android:textAppearance="?android:textAppearanceMedium"
             android:textColor="@color/black"
             tools:text="Slot" />
+        <TextView
+            android:id="@+id/Status"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_below="@id/MyDate"
+            android:layout_weight="1"
+            android:gravity="top"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:textColor="@color/Blue"
+            tools:text="Status" />
 
     </LinearLayout>
 

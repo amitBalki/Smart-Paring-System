@@ -26,6 +26,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.LocationListener;
@@ -64,7 +66,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -76,8 +80,10 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
     private LinearLayout bottom_sheet;
     private Button Navigate,Cancel;
     private ImageView iv;
+    private ProgressBar progress;
     Bitmap bitmap;
     private String ParkingName,SlotName;
+    private TextView address;
     public final static int QRcodeWidth = 700 ;
     GoogleMap mGoogleMap;
     View view;
@@ -93,9 +99,12 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         bottom_sheet = view.findViewById(R.id.booking_confirmed);
         ParkingName = this.getArguments().getString("ParkingName");
         Navigate = view.findViewById(R.id.navigate);
+        address = view.findViewById(R.id.address);
         Cancel = view.findViewById(R.id.cancel);
+        progress = view.findViewById(R.id.progressBar);
         iv = view.findViewById(R.id.iv);
-        new Thread(new Runnable() {
+        progress.setVisibility(View.VISIBLE);
+        Thread th = new Thread (new Runnable() {
             @Override
             public void run() {
                 String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -114,43 +123,33 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
                     sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
 
                 }
+                handler.sendEmptyMessage(1);
             }
-        }).start();
+        });
+        th.start();
+        final String marker = getArguments().getString("ParkingName");
+        if (marker!=null){
+            FirebaseDatabase.getInstance().getReference("Parkings").child(marker).child("Address").addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    String add = dataSnapshot.getValue().toString();
+                    setAddress(add);
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+        }
+        else{
+            getActivity().finish();
+        }
         Cancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        final DatabaseReference data = FirebaseDatabase.getInstance().getReference("Parkings")
-                            .child(ParkingName)
-                            .child("Slots")
-                            .child("Booked");
-                        final DatabaseReference userData = data.child(FirebaseAuth.getInstance().getCurrentUser().getUid());
-                        Log.d(TAG, "run: "+userData.toString());
-                        userData.child("Slot").addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                String SlotNumber;
-                                SlotName = dataSnapshot.getValue().toString();
-                                if(SlotName!=null){
-                                    Log.d(TAG, "run: "+SlotName);
-                                    SlotNumber = SlotName.substring(4);     //Starting Index of Slot Number Eg. Slot2
-                                    userData.removeValue();
-                                    data.getParent().child("Available")
-                                            .child(SlotNumber).setValue(SlotName);
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-
-
-                    }
-                }).start();
+                cancel();
+                addtoHistory(marker);
                 Intent intent = new Intent(getActivity(),MapNavActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 getActivity().finish();
@@ -163,6 +162,8 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         view.findViewById(R.id.proceedpayment).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                cancel();
+                getActivity().finish();
                 startActivity(new Intent(getActivity(), PaymentActivity.class));
             }
         });
@@ -175,11 +176,75 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         });
         return view;
     }
+
+    private void addtoHistory(String marker) {
+        final DatabaseReference mRef = FirebaseDatabase.getInstance().getReference("Users")
+                .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                .child("MyBookings");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String date = format.format( new Date());
+        final customHistory CbookingHistory = new customHistory(marker,date,0 ,"Cancelled");
+        mRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                String Booking = "Booking"+ Long.toString(dataSnapshot.getChildrenCount());
+                mRef.child(Booking).setValue(CbookingHistory);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void setAddress(String Add){
+        address.setText(Add);
+    }
+
+    private void cancel() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final DatabaseReference data = FirebaseDatabase.getInstance().getReference("Parkings")
+                        .child(ParkingName)
+                        .child("Slots")
+                        .child("Booked");
+                final DatabaseReference userData = data.child(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                Log.d(TAG, "run: "+userData.toString());
+                userData.child("Slot").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        String SlotNumber;
+                        SlotName = dataSnapshot.getValue().toString();
+                        if(SlotName!=null){
+                            Log.d(TAG, "run: "+SlotName);
+                            SlotNumber = SlotName.substring(4);     //Starting Index of Slot Number Eg. Slot2
+                            userData.removeValue();
+                            data.getParent().child("Available")
+                                    .child(SlotNumber).setValue(SlotName);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+
+
+            }
+        }).start();
+    }
+
     Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             if (msg.what == 0) {
                 iv.setImageBitmap(bitmap);
+            }
+            if(msg.what==1){
+                progress.setVisibility(View.GONE);
             }
         }
     };
@@ -302,7 +367,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
             String mode = "mode=driving";
             String param = origin + "&"+dest+"&"+sensor+"&"+mode;
             url = "https://maps.googleapis.com/maps/api/directions/" +"json"+"?"+param;
-
+            Log.d("directionURL", "generateURL: "+ url);
 
         }
         return url;

@@ -24,6 +24,8 @@ public class CoverActivity extends AppCompatActivity {
 
             public void run() {
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+
                 if(user != null){
                     Intent i;
                     if(FirebaseDatabase.getInstance().getReference("Users")
@@ -48,7 +50,7 @@ public class CoverActivity extends AppCompatActivity {
 
             }
 
-        }, 3000);
+        }, 2000);
 
 
 
