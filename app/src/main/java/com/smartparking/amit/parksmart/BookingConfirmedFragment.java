@@ -82,6 +82,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
     private ImageView iv;
     private ProgressBar progress;
     Bitmap bitmap;
+    private String userId;
     private String ParkingName,SlotName;
     private TextView address;
     public final static int QRcodeWidth = 700 ;
@@ -104,30 +105,39 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         progress = view.findViewById(R.id.progressBar);
         iv = view.findViewById(R.id.iv);
         progress.setVisibility(View.VISIBLE);
-        Thread th = new Thread (new Runnable() {
+        userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        final String marker = getArguments().getString("ParkingName");
+        final DatabaseReference bookref = FirebaseDatabase.getInstance().getReference("Parkings").child(marker).child("Slots").child("Booked").child(userId);
+        bookref.addValueEventListener(new ValueEventListener() {
             @Override
-            public void run() {
-                String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                String qrString = (userId+"$"+ FirebaseDatabase.getInstance().getReference("Parkings").child("Booked").child(userId).child("OTP").toString());
-                if(qrString.length() == 0){
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                try {
+                    Log.d(TAG, "onDataChange: "+ dataSnapshot.toString());
+                    if(dataSnapshot.exists()) {
+                        String Otp = dataSnapshot.child("OTP").getValue().toString();
+                        String Slot = dataSnapshot.child("Slot").getValue().toString();
+                        //Log.d("Arrived", "onDataChange: "+dataSnapshot.child("Status").getValue().toString() );
+                        if (dataSnapshot.child("Status").getValue().toString().equals("Arrived")) {
+                            //Log.d(TAG, "onDataChange: Entered into if "+dataSnapshot.child("Status").getValue().toString());
+                            Slot = Slot + "Arrived";
+                            sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                            Navigate.setVisibility(View.GONE);
+                            Cancel.setVisibility(View.GONE);
 
-                }else {
-                    try {
-                        bitmap = TextToImageEncode(qrString);
-                        handler.sendEmptyMessage(0);
-                        // String path = saveImage(bitmap);  //give read write permission
-                        //  Toast.makeText(MainActivity.this, "QRCode saved to -> "+path, Toast.LENGTH_SHORT).show();
-                    } catch (WriterException e) {
-                        e.printStackTrace();
+                        }
+                        generateQR(Otp, Slot);
                     }
-                    sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                }catch (Throwable throwable){
 
                 }
-                handler.sendEmptyMessage(1);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
             }
         });
-        th.start();
-        final String marker = getArguments().getString("ParkingName");
+
         if (marker!=null){
             FirebaseDatabase.getInstance().getReference("Parkings").child(marker).child("Address").addValueEventListener(new ValueEventListener() {
                 @Override
@@ -152,6 +162,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
                 addtoHistory(marker);
                 Intent intent = new Intent(getActivity(),MapNavActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                getFragmentManager().executePendingTransactions();
                 getActivity().finish();
                 Toast.makeText(getActivity(),"Booking Cancelled", Toast.LENGTH_SHORT).show();
                 startActivity(intent);
@@ -197,13 +208,37 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
             }
         });
     }
+    public void generateQR(final String otp, final String Slot){
+        Thread th = new Thread (new Runnable() {
+            @Override
+            public void run() {
+                String qrString = (userId+"$"+otp+Slot);
+                if(qrString.length() == 0){
 
+                }else {
+                    try {
+                        if(isAdded()){
+                        bitmap = TextToImageEncode(qrString);
+                        handler.sendEmptyMessage(0);}
+                        // String path = saveImage(bitmap);  //give read write permission
+                        //  Toast.makeText(MainActivity.this, "QRCode saved to -> "+path, Toast.LENGTH_SHORT).show();
+                    } catch (WriterException e) {
+                        e.printStackTrace();
+                    }
+                    sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+
+                }
+                handler.sendEmptyMessage(1);
+            }
+        });
+        th.start();
+    }
     private void setAddress(String Add){
         address.setText(Add);
     }
 
     private void cancel() {
-        new Thread(new Runnable() {
+        Thread a = new Thread(new Runnable() {
             @Override
             public void run() {
                 final DatabaseReference data = FirebaseDatabase.getInstance().getReference("Parkings")
@@ -234,7 +269,8 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
 
 
             }
-        }).start();
+        });
+        a.start();
     }
 
     Handler handler = new Handler() {
@@ -437,9 +473,10 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
             if (polylineOptions!=null) {
                 mGoogleMap.addPolyline(polylineOptions);
             } else {
-                Toast.makeText(getActivity(), "Direction not found!", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getActivity(), "Direction not found!", Toast.LENGTH_SHORT).show();
             }
 
         }
     }
+
 }

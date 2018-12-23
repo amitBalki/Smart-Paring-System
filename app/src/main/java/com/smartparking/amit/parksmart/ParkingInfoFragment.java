@@ -89,8 +89,9 @@ public class ParkingInfoFragment extends Fragment{
         //Todo QR code generation and OTP generation
         String id = FirebaseAuth.getInstance().getCurrentUser().getUid();
         mDatabase.child("Booked").child(id).child("Slot").setValue(s);
-        mDatabase.child("Booked").child(id).child("OTP").setValue("SOMEOTP");
-
+        int random = (int)(Math.random() * 9000 + 1000);
+        mDatabase.child("Booked").child(id).child("OTP").setValue(Integer.toString(random));
+        mDatabase.child("Booked").child(id).child("Status").setValue("Booked");
         //////////////////OnBOokingComplete///////////////////////////////////
         /*Intent intent = new Intent(ParkingInfoActivity.this, MapNavActivity.class);
         finish();
@@ -102,13 +103,13 @@ public class ParkingInfoFragment extends Fragment{
                 .child("BookedSatus")
                 .child("locationInfo").setValue(bundle.clone());
 
-        if(bundle!=null) {
+        //if(bundle!=null) {
             BookingConfirmedFragment bookingConfirmedFragment = new BookingConfirmedFragment();
             bookingConfirmedFragment.setArguments(bundle);
             getFragmentManager().beginTransaction()
                     .replace(R.id.map_container, bookingConfirmedFragment)
-                    .addToBackStack(MapsFragment.class.getSimpleName())
+                    //.addToBackStack(MapsFragment.class.getSimpleName())
                     .commit();
-        }
+        //}
     }
 }

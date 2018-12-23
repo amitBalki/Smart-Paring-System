@@ -35,6 +35,7 @@
         android:layout_height="match_parent"
         android:background="@color/colorWhite"
         android:layout_below="@+id/header"
-        android:divider="@color/black"/>
+        android:dividerHeight="1dp"
+        android:divider="@color/browser_actions_bg_grey"/>
 
 </RelativeLayout>
