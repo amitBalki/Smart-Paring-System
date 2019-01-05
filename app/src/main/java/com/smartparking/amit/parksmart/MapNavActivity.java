@@ -66,6 +66,7 @@ import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -254,9 +255,18 @@ public class MapNavActivity extends AppCompatActivity implements NavigationView.
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        Fragment f = getFragmentManager().findFragmentById(R.id.bottom_sheet);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
-        } else {
+        }
+        else if (f != null)
+        {
+            if(f.equals(BookingConfirmedFragment.class)){
+                Toast.makeText(MapNavActivity.this,"Do not close the app!",Toast.LENGTH_SHORT).show();
+            }
+
+        }
+        else{
             super.onBackPressed();
         }
     }

@@ -131,7 +131,6 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
 
                 }
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
 
@@ -159,7 +158,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
             @Override
             public void onClick(View v) {
                 cancel();
-                addtoHistory(marker);
+                addtoHistory(marker,(long) 0,"Cancelled");
                 Intent intent = new Intent(getActivity(),MapNavActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 getFragmentManager().executePendingTransactions();
@@ -175,6 +174,20 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
             public void onClick(View v) {
                 cancel();
                 getActivity().finish();
+                final DatabaseReference mref = FirebaseDatabase.getInstance().getReference("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                        .child("MyBookings");
+                mref.child("CurrentBooking").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        addtoHistory(marker, (Long) dataSnapshot.child("Bill").getValue(),"Unpaid");
+                        mref.child("CurrentBooking").setValue(null);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
                 startActivity(new Intent(getActivity(), PaymentActivity.class));
             }
         });
@@ -188,13 +201,13 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         return view;
     }
 
-    private void addtoHistory(String marker) {
+    private void addtoHistory(String marker, Long Bill,String status) {
         final DatabaseReference mRef = FirebaseDatabase.getInstance().getReference("Users")
                 .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
                 .child("MyBookings");
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String date = format.format( new Date());
-        final customHistory CbookingHistory = new customHistory(marker,date,0 ,"Cancelled");
+        final customHistory CbookingHistory = new customHistory(marker,date,Bill ,status);
         mRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
