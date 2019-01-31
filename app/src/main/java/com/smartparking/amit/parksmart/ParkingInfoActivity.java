@@ -100,7 +100,6 @@ public class ParkingInfoActivity extends AppCompatActivity {
                 .child(marker)
                 .child("Slots");
         mDatabase.child("Available").child(key).removeValue();
-        //Todo QR code generation and OTP generation
         String id = FirebaseAuth.getInstance().getCurrentUser().getUid();
         mDatabase.child("Booked").child(id).child("Slot").setValue(s);
         mDatabase.child("Booked").child(id).child("OTP").setValue("SOMEOTP");

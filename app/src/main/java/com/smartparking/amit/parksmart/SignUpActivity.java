@@ -1,6 +1,7 @@
 package com.smartparking.amit.parksmart;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -18,6 +19,8 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class SignUpActivity extends AppCompatActivity implements View.OnClickListener{
@@ -87,17 +90,13 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
             return;
         }
 
-        mAuth.createUserWithEmailAndPassword(email,password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+        mAuth.createUserWithEmailAndPassword(email,password)
+                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if(task.isSuccessful()){
                     user user1 = new user(mPhone,mFirstName,email);
-                    //Log.d("Reg", "onComplete: User is regestered" + FirebaseAuth.getInstance().getCurrentUser().getUid());
-                    //   FirebaseDatabase database = FirebaseDatabase.getInstance();
-                    // DatabaseReference myRef = database.getReference("Users");
-                    //myRef.child("Users")
-                    //      .setValue(user);
-                    //Log.d("Reg", "onComplete: " + FirebaseDatabase.getInstance().getReference("Users"));
+                    updatedisplayname(mFirstName);
                     FirebaseDatabase.getInstance()
                             .getReference("Users")
                             .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
@@ -125,17 +124,33 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                     progressBar.setVisibility(View.GONE);
                     if(task.getException() instanceof FirebaseAuthUserCollisionException){
                         Toast.makeText(getApplicationContext(),"User already exist",Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(SignUpActivity.this,MapNavActivity.class);
                     }
                     else{
                         Toast.makeText(getApplicationContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
-                        Log.d("signup",task.getException().getMessage());
                     }
                 }
 
             }
         });
 
+    }
+
+    private void updatedisplayname(String mFirstName) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                .setDisplayName(mFirstName)
+                .build();
+
+        user.updateProfile(profileUpdates)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            Log.d("ProfileUpdate", "User profile updated.");
+                        }
+                    }
+                });
     }
 
     @Override

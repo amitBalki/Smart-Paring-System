@@ -32,14 +32,16 @@ public class CustomAdapter extends ArrayAdapter<customHistory>{
             }
 
             customHistory currentHistory = getItem(position);
-            TextView sysName = (TextView) listItemView.findViewById(R.id.Name);
+            TextView sysName =  listItemView.findViewById(R.id.Name);
             sysName.setText(currentHistory.getmSystemName());
-            TextView date= (TextView) listItemView.findViewById(R.id.MyDate);
+            TextView date = listItemView.findViewById(R.id.MyDate);
             date.setText(currentHistory.getmDate());
-            TextView bill = (TextView) listItemView.findViewById(R.id.Bill);
-            bill.setText( Long.toString(currentHistory.getmBill()));
+            TextView bill = listItemView.findViewById(R.id.Bill);
+            bill.setText( Double.toString(currentHistory.getmBill()));
             TextView status = listItemView.findViewById(R.id.Status);
-            status.setText(currentHistory.getstatus());
+            status.setText(
+
+                    currentHistory.getstatus());
             return listItemView;
         }
 

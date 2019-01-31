@@ -2,14 +2,14 @@ package com.smartparking.amit.parksmart;
 
 public class customHistory {
     private String mSystemName;
-    private long mBill;
+    private double mBill;
     private String mDate,status;
 
     public customHistory(){
 
     }
 
-    public customHistory(String SystemName, String MyDate, long Bill, String status){
+    public customHistory(String SystemName, String MyDate, double Bill, String status){
         this.mSystemName = SystemName;
         this.mDate = MyDate;
         this.mBill = Bill;
@@ -21,7 +21,7 @@ public class customHistory {
         this.mDate = MyDate;
         this.status = Status;
     }*/
-    public long getmBill() {
+    public double getmBill() {
     return mBill;
 }
     public String getmSystemName() {

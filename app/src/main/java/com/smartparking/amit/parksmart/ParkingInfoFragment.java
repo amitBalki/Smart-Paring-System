@@ -93,16 +93,7 @@ public class ParkingInfoFragment extends Fragment{
         mDatabase.child("Booked").child(id).child("OTP").setValue(Integer.toString(random));
         mDatabase.child("Booked").child(id).child("Status").setValue("Booked");
         //////////////////OnBOokingComplete///////////////////////////////////
-        /*Intent intent = new Intent(ParkingInfoActivity.this, MapNavActivity.class);
-        finish();
-        intent.putExtra("BookingCode", "Booked");
-        startActivity(intent);*/
         Bundle bundle = this.getArguments();
-        FirebaseDatabase.getInstance().getReference("Users")
-                .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
-                .child("BookedSatus")
-                .child("locationInfo").setValue(bundle.clone());
-
         //if(bundle!=null) {
             BookingConfirmedFragment bookingConfirmedFragment = new BookingConfirmedFragment();
             bookingConfirmedFragment.setArguments(bundle);

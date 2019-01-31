@@ -15,17 +15,17 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:orientation="horizontal"
             android:layout_gravity="center_vertical"
-            android:layout_marginBottom="@dimen/btn_margin"
-            android:weightSum="2">
+            android:layout_marginBottom="@dimen/btn_margin">
 
             <Button
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Cancel"
+                android:text="@string/cancel"
                 android:elevation="16dp"
                 android:id="@+id/cancel"/>
 
@@ -34,7 +34,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:elevation="16dp"
-                android:text="Navigate"
+                android:text="@string/navigate"
                 android:id="@+id/navigate"/>
         </LinearLayout>
 
@@ -43,7 +43,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/iv"
-            android:layout_gravity="center"/>
+            android:layout_gravity="center"
+            android:contentDescription="QRCODE" />
 
 
         <TextView
@@ -51,7 +52,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/btn_margin"
             android:text="Parking Address"
-            android:layout_marginLeft="@dimen/btn_margin"
+            android:layout_marginStart="@dimen/btn_margin"
             android:textColor="#444"
             android:textStyle="bold" />
 
@@ -59,8 +60,8 @@
             android:id="@+id/address"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="@dimen/btn_margin"
-            android:text="Flat No 404, Skyline Apartments, Vizag - 500576" />
+            android:layout_marginStart="@dimen/btn_margin"
+            android:text="@string/address" />
 
         <Button
             android:layout_width="match_parent"
@@ -70,7 +71,7 @@
             android:background="#000"
             android:elevation="16dp"
             android:foreground="?attr/selectableItemBackground"
-            android:text="PROCEED PAYMENT"
+            android:text="@string/proceed_payment"
             android:textColor="#fff" />
 
 </LinearLayout>

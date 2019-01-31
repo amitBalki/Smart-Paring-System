@@ -125,7 +125,15 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
                             Cancel.setVisibility(View.GONE);
 
                         }
-                        generateQR(Otp, Slot);
+                        if (dataSnapshot.child("Status").getValue().toString().equals("Unpaid")) {
+                            sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                            Navigate.setVisibility(View.GONE);
+                            Cancel.setVisibility(View.GONE);
+                            makepayment(marker);
+                        }
+                        else {
+                            generateQR(Otp, Slot);
+                        }
                     }
                 }catch (Throwable throwable){
 
@@ -158,7 +166,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
             @Override
             public void onClick(View v) {
                 cancel();
-                addtoHistory(marker,(long) 0,"Cancelled");
+                addtoHistory(marker,(double) 0,"Cancelled");
                 Intent intent = new Intent(getActivity(),MapNavActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 getFragmentManager().executePendingTransactions();
@@ -172,23 +180,8 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         view.findViewById(R.id.proceedpayment).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                cancel();
-                getActivity().finish();
-                final DatabaseReference mref = FirebaseDatabase.getInstance().getReference("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid())
-                        .child("MyBookings");
-                mref.child("CurrentBooking").addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        addtoHistory(marker, (Long) dataSnapshot.child("Bill").getValue(),"Unpaid");
-                        mref.child("CurrentBooking").setValue(null);
-                    }
+                makepayment(marker);
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                    }
-                });
-                startActivity(new Intent(getActivity(), PaymentActivity.class));
             }
         });
 
@@ -201,7 +194,27 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         return view;
     }
 
-    private void addtoHistory(String marker, Long Bill,String status) {
+    private void makepayment(final String marker) {
+        cancel();
+        getActivity().finish();
+        final DatabaseReference mref = FirebaseDatabase.getInstance().getReference("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
+        mref.child("CurrentBooking").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Double l = (Double) dataSnapshot.child("Bill").getValue();
+                addtoHistory(marker,l,"Unpaid");
+                mref.child("CurrentBooking").setValue(null);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+        startActivity(new Intent(getActivity(), PaymentActivity.class));
+    }
+
+    private void addtoHistory(String marker, Double Bill,String status) {
         final DatabaseReference mRef = FirebaseDatabase.getInstance().getReference("Users")
                 .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
                 .child("MyBookings");
@@ -368,9 +381,9 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         int padding = 45; // offset from edges of the map in pixels
         CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
         googleMap.animateCamera(cu);
-        String url = generateURL(bundle);
-        TaskRequestDirections taskRequestDirections = new TaskRequestDirections();
-        taskRequestDirections.execute(url);
+        //String url = generateURL(bundle);
+        //TaskRequestDirections taskRequestDirections = new TaskRequestDirections();
+        //taskRequestDirections.execute(url);
     }
     private String requestDirection(String reqUrl) throws IOException, IOException {
         String responseString = "";

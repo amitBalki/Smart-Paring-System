@@ -1,8 +1,10 @@
 package com.smartparking.amit.parksmart;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Message;
@@ -33,6 +35,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class ProfileActivity extends AppCompatActivity implements View.OnClickListener {
@@ -40,6 +44,7 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
     ImageView profilePicUpdate;
     String profileImageUrl, userId;
     TextView FirstName, PhoneNo, EmailId;
+    String filename = "ProfilePic";
 
     Uri uriProfileImage;
     FirebaseAuth mAuth;
@@ -151,19 +156,24 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
                 startActivity(I);
         }
     }
-    @SuppressLint("HandlerLeak")
+
     Handler mHandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
             if(msg.what==0){
                 findViewById(R.id.progressBar2).setVisibility(View.VISIBLE);
-                profilePicUpdate.setImageBitmap(bitmap);
+                GlideApp.with(ProfileActivity.this)
+                        .load(bitmap)
+                        .circleCrop()
+                        .into(profilePicUpdate);
             }
             if(msg.what == 1){
+
                 GlideApp.with(ProfileActivity.this)
                         .load(mAuth.getCurrentUser().getPhotoUrl().toString())
                         .circleCrop()
                         .into(profilePicUpdate);
+
             }
         }
     };
@@ -177,6 +187,12 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
             try {
                 Log.d("Bitmap", "onActivityResult: BitmapGenerated");
                 bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(),uriProfileImage);
+                /*try (FileOutputStream out = new FileOutputStream(filename)) {
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out); // bmp is your Bitmap instance
+                    Log.d("Offline", "onActivityResult: saved offline ");// PNG is a lossless format, the compression factor (100) is ignored
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }*/
                 mHandler.sendEmptyMessage(0);
                 uploadImageToFirebaseStorage();
             } catch (IOException e) {
@@ -200,7 +216,6 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
                 public void onComplete(@NonNull Task<Void> task) {
                     if (task.isSuccessful()) {
                         Toast.makeText(getApplicationContext(), "Profile Pic Uploaded", Toast.LENGTH_SHORT).show();
-                        Log.d("ProfileUpdated", "onComplete: profile Pic Uploaded");
                         findViewById(R.id.progressBar2).setVisibility(View.GONE);
                     }
                     else{
@@ -209,9 +224,6 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
                 }
             });
 
-        }
-        else{
-            Log.d("ProfileUpdated", "saveInfoToFirbase: "+profileImageUrl);
         }
     }
 
@@ -272,5 +284,4 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
         intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(Intent.createChooser(intent,"Select Profile Image"),CHOOSE_IMAGE);
     }
-
 }
