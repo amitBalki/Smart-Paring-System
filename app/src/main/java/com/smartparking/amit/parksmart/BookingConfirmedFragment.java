@@ -3,6 +3,7 @@ package com.smartparking.amit.parksmart;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -16,8 +17,6 @@ import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -81,8 +80,9 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
     private Button Navigate,Cancel;
     private ImageView iv;
     private ProgressBar progress;
-    Bitmap bitmap;
-    private String userId;
+    private Bitmap bitmap;
+    private int state_save = 0;
+    private String userId, status,marker;
     private String ParkingName,SlotName;
     private TextView address;
     public final static int QRcodeWidth = 700 ;
@@ -106,7 +106,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         iv = view.findViewById(R.id.iv);
         progress.setVisibility(View.VISIBLE);
         userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        final String marker = getArguments().getString("ParkingName");
+        marker = getArguments().getString("ParkingName");
         final DatabaseReference bookref = FirebaseDatabase.getInstance().getReference("Parkings").child(marker).child("Slots").child("Booked").child(userId);
         bookref.addValueEventListener(new ValueEventListener() {
             @Override
@@ -117,7 +117,8 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
                         String Otp = dataSnapshot.child("OTP").getValue().toString();
                         String Slot = dataSnapshot.child("Slot").getValue().toString();
                         //Log.d("Arrived", "onDataChange: "+dataSnapshot.child("Status").getValue().toString() );
-                        if (dataSnapshot.child("Status").getValue().toString().equals("Arrived")) {
+                        status=dataSnapshot.child("Status").getValue().toString();
+                        if (status.equals("Arrived")) {
                             //Log.d(TAG, "onDataChange: Entered into if "+dataSnapshot.child("Status").getValue().toString());
                             Slot = Slot + "Arrived";
                             sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -125,7 +126,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
                             Cancel.setVisibility(View.GONE);
 
                         }
-                        if (dataSnapshot.child("Status").getValue().toString().equals("Unpaid")) {
+                        if (status.equals("Unpaid")) {
                             sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
                             Navigate.setVisibility(View.GONE);
                             Cancel.setVisibility(View.GONE);
@@ -146,11 +147,18 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         });
 
         if (marker!=null){
-            FirebaseDatabase.getInstance().getReference("Parkings").child(marker).child("Address").addValueEventListener(new ValueEventListener() {
+            DatabaseReference mf = FirebaseDatabase.getInstance().getReference("Parkings").child(marker).child("Address");
+            Log.d(TAG, "onCreateView: "+mf.toString());
+            mf.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    Log.d(TAG, "onDataChange: "+marker+": "+ dataSnapshot.toString());
+                    try{
                     String add = dataSnapshot.getValue().toString();
                     setAddress(add);
+                    }catch (Throwable throwable){
+                        throwable.printStackTrace();
+                    }
                 }
 
                 @Override
@@ -166,6 +174,16 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
             @Override
             public void onClick(View v) {
                 cancel();
+                SharedPreferences sharedPreferences = getContext().getSharedPreferences("Status", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.remove("status");
+                editor.remove("ParkingName");
+                editor.remove("CurrentLat");
+                editor.remove("CurrentLong");
+                editor.remove("DestinationLat");
+                editor.remove("DestinationLong");
+                editor.commit();
+                state_save = 1;
                 addtoHistory(marker,(double) 0,"Cancelled");
                 Intent intent = new Intent(getActivity(),MapNavActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -277,7 +295,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         String SlotNumber;
-                        SlotName = dataSnapshot.getValue().toString();
+                        SlotName = (String) dataSnapshot.getValue();
                         if(SlotName!=null){
                             Log.d(TAG, "run: "+SlotName);
                             SlotNumber = SlotName.substring(4);     //Starting Index of Slot Number Eg. Slot2
@@ -364,6 +382,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         mGoogleMap = googleMap;
         googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         Bundle bundle = this.getArguments();
+        Log.d("Values_BCF", "CurrentLat: "+bundle.getDouble("CurrentLat")+ " CurrentLong: "+bundle.getDouble("CurrentLong")+" DestinationLat: "+ bundle.getDouble("DestinationLat")+" DestinationLong: "+bundle.getDouble("DestinationLong"));
         ArrayList<Marker> markers = new ArrayList<Marker>();    //Arraylist to store source and destination marker
         Marker mMarker = mGoogleMap.addMarker(new MarkerOptions()   //Source marker
                 .position(new LatLng(bundle.getDouble("CurrentLat"), bundle.getDouble("CurrentLong")))
@@ -377,10 +396,11 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         for (Marker marker : markers) {
             builder.include(marker.getPosition());
         }
+        //Log.d(TAG, "onMapReady: "+markers.get(0).toString()+"marker 2: "+markers.get(1).toString());
         LatLngBounds bounds = builder.build();
         int padding = 45; // offset from edges of the map in pixels
         CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-        googleMap.animateCamera(cu);
+        //googleMap.animateCamera(cu);
         //String url = generateURL(bundle);
         //TaskRequestDirections taskRequestDirections = new TaskRequestDirections();
         //taskRequestDirections.execute(url);
@@ -505,4 +525,22 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         }
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        Bundle bundle = this.getArguments();
+
+        if(state_save == 0){
+            SharedPreferences sharedPreferences = getContext().getSharedPreferences("Status", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString("status",status);
+            editor.putString("ParkingName",marker);
+            editor.putFloat("CurrentLat", (float) bundle.getDouble("CurrentLat"));
+            editor.putFloat("CurrentLong", (float) bundle.getDouble("CurrentLong"));
+            editor.putFloat("DestinationLat", (float) bundle.getDouble("DestinationLat"));
+            editor.putFloat("DestinationLong", (float) bundle.getDouble("DestinationLong"));
+            editor.commit();
+        }
+        Log.d(TAG, "onPause: "+ "sp_saved");
+    }
 }

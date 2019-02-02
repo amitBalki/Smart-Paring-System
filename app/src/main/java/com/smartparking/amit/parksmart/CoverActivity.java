@@ -1,8 +1,11 @@
 package com.smartparking.amit.parksmart;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -28,17 +31,40 @@ public class CoverActivity extends AppCompatActivity {
 
                 if(user != null){
                     Intent i;
-                    if(FirebaseDatabase.getInstance().getReference("Users")
-                            .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
-                            .child("BookedSatus") != null){
-                        i = new Intent(CoverActivity.this, MapNavActivity.class);
-                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        i.putExtra("Fragment", "BookingConfirmedFragment");
-                    }
-                    else {
+                    Context context = CoverActivity.this;
+                    SharedPreferences sharedPreferences = context.getSharedPreferences("Status", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    Boolean s = sharedPreferences.getString("status","").isEmpty();
+                    Log.d("sp", "run: " + sharedPreferences.getString("status",""));
+                    if(s) {
                         i = new Intent(CoverActivity.this, MapNavActivity.class);
                         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         i.putExtra("Fragment", "MapsFragment");
+                    }
+                    else{
+                        Double CurrentLat = Double.valueOf(sharedPreferences.getFloat("CurrentLat",0));
+                        Double CurrentLong = Double.valueOf(sharedPreferences.getFloat("CurrentLong",0));
+                        Double DestinationLat = Double.valueOf(sharedPreferences.getFloat("DestinationLat",0));
+                        Double DestinationLong = Double.valueOf(sharedPreferences.getFloat("DestinationLong",0));
+                        String ParkingName = sharedPreferences.getString("ParkingName","");
+                        Bundle bundle = new Bundle();
+                        Log.d("Values", "CurrentLat: "+CurrentLat+ " CurrentLong: "+CurrentLong+" DestinationLat: "+ DestinationLat+" DestinationLong: "+DestinationLong);
+                        bundle.putDouble("CurrentLat",CurrentLat);
+                        bundle.putDouble("CurrentLong",CurrentLong);
+                        bundle.putDouble("DestinationLat",DestinationLat );
+                        bundle.putDouble("DestinationLong",DestinationLong);
+                        bundle.putString("ParkingName",ParkingName);
+                        editor.remove("status");
+                        editor.remove("ParkingName");
+                        editor.remove("CurrentLat");
+                        editor.remove("CurrentLong");
+                        editor.remove("DestinationLat");
+                        editor.remove("DestinationLong");
+                        editor.commit();
+                        i = new Intent(CoverActivity.this, MapNavActivity.class);
+                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        i.putExtra("Fragment", "BookingConfirmedFragment");
+                        i.putExtra("location",bundle);
                     }
                     startActivity(i);
                 }

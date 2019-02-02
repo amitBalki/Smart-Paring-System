@@ -82,16 +82,35 @@ public class MapNavActivity extends AppCompatActivity implements NavigationView.
 
 
         ////////////////////////MAP_FRAGMENT//////////////////////////////////////////////
+        Intent intent = getIntent();
+        String s = intent.getStringExtra("Fragment");
+        if(s==null){
+            loadMapFragment();
+        }
+        else if(s.equals("MapsFragment")){
+            loadMapFragment();
+        }
+        else{
+            Bundle bundle = intent.getBundleExtra("location");
+            BookingConfirmedFragment bookingConfirmedFragment = new BookingConfirmedFragment();
+            bookingConfirmedFragment.setArguments(bundle);
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.map_container, bookingConfirmedFragment)
+                    .commit();
+        }
+        //////////////////////////Navigation_Drawer_ItemSelectListener/////////////////////////////////////
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+    }
+
+    private void loadMapFragment() {
         if (ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST);
         }
         else{
             findlocation();
         }
-        //////////////////////////Navigation_Drawer_ItemSelectListener/////////////////////////////////////
-        NavigationView navigationView = findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
     }
 
     @Override
