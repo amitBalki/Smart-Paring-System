@@ -77,7 +77,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
 
     private BottomSheetBehavior sheetBehavior;
     private LinearLayout bottom_sheet;
-    private Button Navigate,Cancel;
+    private Button Navigate,Cancel,Payment;
     private ImageView iv;
     private ProgressBar progress;
     private Bitmap bitmap;
@@ -98,6 +98,8 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_booking_confirmed, container, false);
         bottom_sheet = view.findViewById(R.id.booking_confirmed);
+        Payment = view.findViewById(R.id.proceedpayment);
+        Payment.setEnabled(false);
         ParkingName = this.getArguments().getString("ParkingName");
         Navigate = view.findViewById(R.id.navigate);
         address = view.findViewById(R.id.address);
@@ -130,6 +132,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
                             sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
                             Navigate.setVisibility(View.GONE);
                             Cancel.setVisibility(View.GONE);
+                            Payment.setEnabled(true);
                             makepayment(marker);
                         }
                         else {
@@ -176,12 +179,13 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
                 cancel();
                 SharedPreferences sharedPreferences = getContext().getSharedPreferences("Status", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.remove("status");
+                /*editor.remove("status");
                 editor.remove("ParkingName");
                 editor.remove("CurrentLat");
                 editor.remove("CurrentLong");
                 editor.remove("DestinationLat");
-                editor.remove("DestinationLong");
+                editor.remove("DestinationLong");*/
+                editor.clear();
                 editor.commit();
                 state_save = 1;
                 addtoHistory(marker,(double) 0,"Cancelled");
@@ -195,7 +199,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
             }
         });
 
-        view.findViewById(R.id.proceedpayment).setOnClickListener(new View.OnClickListener() {
+        Payment.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 makepayment(marker);
@@ -214,14 +218,18 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
 
     private void makepayment(final String marker) {
         cancel();
-        getActivity().finish();
-        final DatabaseReference mref = FirebaseDatabase.getInstance().getReference("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
-        mref.child("CurrentBooking").addListenerForSingleValueEvent(new ValueEventListener() {
+        final DatabaseReference mref = FirebaseDatabase.getInstance().getReference("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("CurrentBooking");
+        mref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Log.d(TAG, "mref: "+mref.toString());
+                Log.d(TAG, "onDataChange: "+ dataSnapshot.child("Bill").getValue());
                 Double l = (Double) dataSnapshot.child("Bill").getValue();
                 addtoHistory(marker,l,"Unpaid");
-                mref.child("CurrentBooking").setValue(null);
+                mref.setValue(null);
+                Intent intent = new Intent(getContext().getApplicationContext(), PaymentActivity.class);
+                startActivity(intent);
+                getActivity().finish();
             }
 
             @Override
@@ -229,7 +237,6 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
 
             }
         });
-        startActivity(new Intent(getActivity(), PaymentActivity.class));
     }
 
     private void addtoHistory(String marker, Double Bill,String status) {

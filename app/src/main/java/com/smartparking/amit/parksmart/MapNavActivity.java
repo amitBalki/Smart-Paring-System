@@ -24,6 +24,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.GeoDataClient;
@@ -128,6 +129,7 @@ public class MapNavActivity extends AppCompatActivity implements NavigationView.
                 GlideApp.with(MapNavActivity.this)
                         .load(user.getPhotoUrl().toString())
                         .circleCrop()
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
                         .into(ProfileImage);
             }
 

@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -165,6 +166,7 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
                 GlideApp.with(ProfileActivity.this)
                         .load(bitmap)
                         .circleCrop()
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
                         .into(profilePicUpdate);
             }
             if(msg.what == 1){
@@ -172,6 +174,7 @@ public class ProfileActivity extends AppCompatActivity implements View.OnClickLi
                 GlideApp.with(ProfileActivity.this)
                         .load(mAuth.getCurrentUser().getPhotoUrl().toString())
                         .circleCrop()
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
                         .into(profilePicUpdate);
 
             }

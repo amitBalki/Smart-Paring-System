@@ -71,6 +71,7 @@
             android:background="#000"
             android:elevation="16dp"
             android:foreground="?attr/selectableItemBackground"
+
             android:text="@string/proceed_payment"
             android:textColor="#fff" />
 
