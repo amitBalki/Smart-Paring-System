@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.net.sip.SipSession;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -65,6 +66,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.sql.SQLOutput;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -82,6 +84,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
     private ProgressBar progress;
     private Bitmap bitmap;
     private int state_save = 0;
+    private Double Bill;
     private String userId, status,marker;
     private String ParkingName,SlotName;
     private TextView address;
@@ -120,27 +123,38 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
                         String Slot = dataSnapshot.child("Slot").getValue().toString();
                         //Log.d("Arrived", "onDataChange: "+dataSnapshot.child("Status").getValue().toString() );
                         status=dataSnapshot.child("Status").getValue().toString();
-                        if (status.equals("Arrived")) {
-                            //Log.d(TAG, "onDataChange: Entered into if "+dataSnapshot.child("Status").getValue().toString());
-                            Slot = Slot + "Arrived";
-                            sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                            Navigate.setVisibility(View.GONE);
-                            Cancel.setVisibility(View.GONE);
+                        Log.d(TAG, "onDataChange: "+status);
 
-                        }
                         if (status.equals("Unpaid")) {
+                            Bill = Double.parseDouble(dataSnapshot.child("Bill").getValue().toString());
+                            Log.d(TAG, "onDataChange: "+Bill);
                             sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
                             Navigate.setVisibility(View.GONE);
                             Cancel.setVisibility(View.GONE);
                             Payment.setEnabled(true);
                             makepayment(marker);
                         }
-                        else {
+                        else if(status == "Booked") {
                             generateQR(Otp, Slot);
+                            Log.d(TAG, "onDataChange: "+"Booked");
+                        }
+                        else if (status.equals("Arrived") && dataSnapshot.child("Bill").getValue()==null) {
+                            //Log.d(TAG, "onDataChange: Entered into if "+dataSnapshot.child("Status").getValue().toString());
+                            Log.d(TAG, "onDataChange: "+"Arrived");
+                            Slot = Slot + "Arrived";
+                            generateQR(Otp, Slot);
+                            sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                            Navigate.setVisibility(View.GONE);
+                            Cancel.setVisibility(View.GONE);
+
+                        }
+                        else{
+                            Log.d(TAG, "onDataChange: "+"Nintendo");
                         }
                     }
-                }catch (Throwable throwable){
-
+                }catch (Exception e){
+                    e.printStackTrace();
+                    Log.d(TAG, "onDataChange: "+"Sabka katega");
                 }
             }
             @Override
@@ -218,25 +232,10 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
 
     private void makepayment(final String marker) {
         cancel();
-        final DatabaseReference mref = FirebaseDatabase.getInstance().getReference("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("CurrentBooking");
-        mref.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Log.d(TAG, "mref: "+mref.toString());
-                Log.d(TAG, "onDataChange: "+ dataSnapshot.child("Bill").getValue());
-                Double l = (Double) dataSnapshot.child("Bill").getValue();
-                addtoHistory(marker,l,"Unpaid");
-                mref.setValue(null);
-                Intent intent = new Intent(getContext().getApplicationContext(), PaymentActivity.class);
-                startActivity(intent);
-                getActivity().finish();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
+        addtoHistory(marker,Bill,"Unpaid");
+        Intent intent = new Intent(getContext().getApplicationContext(), PaymentActivity.class);
+        startActivity(intent);
+        getActivity().finish();
     }
 
     private void addtoHistory(String marker, Double Bill,String status) {
