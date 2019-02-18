@@ -15,6 +15,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static java.lang.String.valueOf;
+
 public class CoverActivity extends AppCompatActivity {
 
     @Override
@@ -42,11 +44,12 @@ public class CoverActivity extends AppCompatActivity {
                         i.putExtra("Fragment", "MapsFragment");
                     }
                     else{
-                        Double CurrentLat = Double.valueOf(sharedPreferences.getFloat("CurrentLat",0));
-                        Double CurrentLong = Double.valueOf(sharedPreferences.getFloat("CurrentLong",0));
-                        Double DestinationLat = Double.valueOf(sharedPreferences.getFloat("DestinationLat",0));
-                        Double DestinationLong = Double.valueOf(sharedPreferences.getFloat("DestinationLong",0));
+                        Double CurrentLat = Double.parseDouble(String.valueOf(sharedPreferences.getFloat("CurrentLat",0)));
+                        Double CurrentLong = Double.parseDouble(String.valueOf(sharedPreferences.getFloat("CurrentLong",0)));
+                        Double DestinationLat = Double.parseDouble(String.valueOf(sharedPreferences.getFloat("DestinationLat",0)));
+                        Double DestinationLong = Double.parseDouble(String.valueOf(sharedPreferences.getFloat("DestinationLong",0)));
                         String ParkingName = sharedPreferences.getString("ParkingName","");
+                        String status = sharedPreferences.getString("status","");
                         Bundle bundle = new Bundle();
                         Log.d("Values", "CurrentLat: "+CurrentLat+ " CurrentLong: "+CurrentLong+" DestinationLat: "+ DestinationLat+" DestinationLong: "+DestinationLong);
                         bundle.putDouble("CurrentLat",CurrentLat);
@@ -54,6 +57,7 @@ public class CoverActivity extends AppCompatActivity {
                         bundle.putDouble("DestinationLat",DestinationLat );
                         bundle.putDouble("DestinationLong",DestinationLong);
                         bundle.putString("ParkingName",ParkingName);
+                        bundle.putString("status",status);
                         editor.remove("status");
                         editor.remove("ParkingName");
                         editor.remove("CurrentLat");

@@ -19,6 +19,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -84,8 +85,8 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
     private ProgressBar progress;
     private Bitmap bitmap;
     private int state_save = 0;
-    private Double Bill;
-    private String userId, status,marker;
+    private Double Bill = null;
+    private String userId, status,marker,Otp,Slot;
     private String ParkingName,SlotName;
     private TextView address;
     public final static int QRcodeWidth = 700 ;
@@ -101,6 +102,9 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_booking_confirmed, container, false);
         bottom_sheet = view.findViewById(R.id.booking_confirmed);
+        ////////////////////BottomSheet////////////////////////////////////////////////////
+        sheetBehavior = BottomSheetBehavior.from(bottom_sheet);
+        sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
         Payment = view.findViewById(R.id.proceedpayment);
         Payment.setEnabled(false);
         ParkingName = this.getArguments().getString("ParkingName");
@@ -112,49 +116,41 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         progress.setVisibility(View.VISIBLE);
         userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         marker = getArguments().getString("ParkingName");
+        Bundle bundle = this.getArguments();
+        if(bundle!=null){
+            if(bundle.getString("status")!=null){
+                status = bundle.getString("status");
+                Log.d(TAG, "onCreateView: status info available"+ status);
+                checkStatus();
+
+            }
+            else{
+                Log.d(TAG, "onCreateView: "+ "statusInfoLost");
+            }
+            Log.d(TAG, "onCreateView: "+"Bundle is not null");
+        }else {
+            Log.d(TAG, "onCreateView: "+"Bundle is null");
+        }
         final DatabaseReference bookref = FirebaseDatabase.getInstance().getReference("Parkings").child(marker).child("Slots").child("Booked").child(userId);
         bookref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 try {
-                    Log.d(TAG, "onDataChange: "+ dataSnapshot.toString());
+                    //Log.d(TAG, "onDataChange: "+ dataSnapshot.toString());
                     if(dataSnapshot.exists()) {
-                        String Otp = dataSnapshot.child("OTP").getValue().toString();
-                        String Slot = dataSnapshot.child("Slot").getValue().toString();
+                        Otp = dataSnapshot.child("OTP").getValue().toString();
+                        Slot = dataSnapshot.child("Slot").getValue().toString();
                         //Log.d("Arrived", "onDataChange: "+dataSnapshot.child("Status").getValue().toString() );
                         status=dataSnapshot.child("Status").getValue().toString();
-                        Log.d(TAG, "onDataChange: "+status);
-
-                        if (status.equals("Unpaid")) {
-                            Bill = Double.parseDouble(dataSnapshot.child("Bill").getValue().toString());
-                            Log.d(TAG, "onDataChange: "+Bill);
-                            sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-                            Navigate.setVisibility(View.GONE);
-                            Cancel.setVisibility(View.GONE);
-                            Payment.setEnabled(true);
-                            makepayment(marker);
+                        //Log.d(TAG, "onDataChange: "+status);
+                        if(dataSnapshot.child("Bill").getValue()!=null){
+                            Bill = Double.parseDouble(dataSnapshot.child("Bill").getValue().toString()); //To get value(Number) which might be Double or Long as a Double
                         }
-                        else if(status == "Booked") {
-                            generateQR(Otp, Slot);
-                            Log.d(TAG, "onDataChange: "+"Booked");
-                        }
-                        else if (status.equals("Arrived") && dataSnapshot.child("Bill").getValue()==null) {
-                            //Log.d(TAG, "onDataChange: Entered into if "+dataSnapshot.child("Status").getValue().toString());
-                            Log.d(TAG, "onDataChange: "+"Arrived");
-                            Slot = Slot + "Arrived";
-                            generateQR(Otp, Slot);
-                            sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                            Navigate.setVisibility(View.GONE);
-                            Cancel.setVisibility(View.GONE);
-
-                        }
-                        else{
-                            Log.d(TAG, "onDataChange: "+"Nintendo");
-                        }
+                        checkStatus();
                     }
                 }catch (Exception e){
                     e.printStackTrace();
-                    Log.d(TAG, "onDataChange: "+"Sabka katega");
+                    //Log.d(TAG, "onDataChange: "+"Sabka katega");
                 }
             }
             @Override
@@ -201,7 +197,6 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
                 editor.remove("DestinationLong");*/
                 editor.clear();
                 editor.commit();
-                state_save = 1;
                 addtoHistory(marker,(double) 0,"Cancelled");
                 Intent intent = new Intent(getActivity(),MapNavActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -228,6 +223,35 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
             }
         });
         return view;
+    }
+
+    private void checkStatus() {
+        Log.d(TAG, "checkStatus: "+status);
+        if (status.equals("Unpaid")) {
+            Log.d(TAG, "checkStatus: "+Bill);
+            sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            Navigate.setVisibility(View.GONE);
+            Cancel.setVisibility(View.GONE);
+            Payment.setEnabled(true);
+            makepayment(marker);
+        }
+        else if(status.equals("Booked")) {
+            generateQR(Otp, Slot);
+            Log.d(TAG, "checkStatus: "+"Booked");
+        }
+        else if (status.equals("Arrived") && Bill==null) {
+            //Log.d(TAG, "onDataChange: Entered into if "+dataSnapshot.child("Status").getValue().toString());
+            Log.d(TAG, "checkStatus: "+"Arrived");
+            Slot = Slot + "Arrived";
+            generateQR(Otp, Slot);
+            sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            Navigate.setVisibility(View.GONE);
+            Cancel.setVisibility(View.GONE);
+
+        }
+        else{
+            Log.d(TAG, "checkStatus: "+"Nintendo");
+        }
     }
 
     private void makepayment(final String marker) {
@@ -291,6 +315,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
         Thread a = new Thread(new Runnable() {
             @Override
             public void run() {
+                state_save = 1;
                 final DatabaseReference data = FirebaseDatabase.getInstance().getReference("Parkings")
                         .child(ParkingName)
                         .child("Slots")
@@ -344,9 +369,6 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
             mMapView.onResume();
             mMapView.getMapAsync(this);
         }
-        ////////////////////BottomSheet////////////////////////////////////////////////////
-        sheetBehavior = BottomSheetBehavior.from(bottom_sheet);
-        sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
     }
     private Bitmap TextToImageEncode(String Value) throws WriterException  {
         BitMatrix bitMatrix;
@@ -373,7 +395,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
             for (int x = 0; x < bitMatrixWidth; x++) {
 
                 pixels[offset + x] = bitMatrix.get(x, y) ?
-                        getResources().getColor(R.color.black):getResources().getColor(R.color.white);
+                        ContextCompat.getColor(getContext(),R.color.black):ContextCompat.getColor(getContext(),R.color.white);
             }
         }
         Bitmap bitmap = Bitmap.createBitmap(bitMatrixWidth, bitMatrixHeight, Bitmap.Config.ARGB_4444);
@@ -530,7 +552,6 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
 
         }
     }
-
     @Override
     public void onPause() {
         super.onPause();
@@ -545,6 +566,7 @@ public class BookingConfirmedFragment extends Fragment implements OnMapReadyCall
             editor.putFloat("CurrentLong", (float) bundle.getDouble("CurrentLong"));
             editor.putFloat("DestinationLat", (float) bundle.getDouble("DestinationLat"));
             editor.putFloat("DestinationLong", (float) bundle.getDouble("DestinationLong"));
+            editor.putString("status",status);
             editor.commit();
         }
         Log.d(TAG, "onPause: "+ "sp_saved");
